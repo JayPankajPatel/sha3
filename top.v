@@ -3,49 +3,20 @@
 `define MDLEN 256
 `define ILEN 344
 
-module pll_12_50(input clki, output clko);
-    (* ICP_CURRENT="12" *) (* LPF_RESISTOR="8" *) (* MFG_ENABLE_FILTEROPAMP="1" *) (* MFG_GMCREF_SEL="2" *)
-    EHXPLLL #(
-        .PLLRST_ENA("DISABLED"),
-        .INTFB_WAKE("DISABLED"),
-        .STDBY_ENABLE("DISABLED"),
-        .DPHASE_SOURCE("DISABLED"),
-        .CLKOP_FPHASE(0),
-        .CLKOP_CPHASE(11),
-        .OUTDIVIDER_MUXA("DIVA"),
-        .CLKOP_ENABLE("ENABLED"),
-        .CLKOP_DIV(12),
-        .CLKFB_DIV(25),
-        .CLKI_DIV(6),
-        .FEEDBK_PATH("CLKOP")
-    ) pll_i (
-        .CLKI(clki),
-        .CLKFB(clko),
-        .CLKOP(clko),
-        .RST(1'b0),
-        .STDBY(1'b0),
-        .PHASESEL0(1'b0),
-        .PHASESEL1(1'b0),
-        .PHASEDIR(1'b0),
-        .PHASESTEP(1'b0),
-        .PLLWAKESYNC(1'b0),
-        .ENCLKOP(1'b0),
-    );
-endmodule
+
 
 module top(input wire clk,
            input wire rstn,
            output tp0,
            output tp1,
            output tp2,
-           output reg [7:0] led);
+           output reg [7:0] LED);
 
    reg [3:0] state;
    reg rst;
    reg [15:0] count;
    wire refclk;
-
-   pll_12_50 pll_inst(clk, refclk);
+   assign refclk = clk; 
 
    wire [`MDLEN-1:0] sha3_out;
    wire req_ready, req_busy, res_valid;
@@ -62,7 +33,7 @@ module top(input wire clk,
     .res_valid(res_valid),
     .res_ready(res_ready));
 
-   assign tp0 = count[0:0];
+   assign tp0 = count;
 
    always @(posedge refclk) begin
       if (rstn == 0) begin
@@ -79,10 +50,10 @@ module top(input wire clk,
       if (!rst) begin
          if (res_valid & !res_ready) begin
             res_ready <= 1;
-	    if (sha3_out == 256'h69070dda01975c8c120c3aada1b282394e7f032fa9cf32f4cb2259a0897dfc04) begin
+	    if (sha3_out == 256'h69070dda01975c8c120c3aada1b282394e7f032fa9cf32f4cb2259a0897dfc00) begin
 	       count <= count + 1;
 	    end
-	    led[7:0] <= ~sha3_out[255:255-7];
+	    LED[7:0] <= ~sha3_out[255:255-7];
 	    state <= 4;
 	 end
          else if (!res_valid) begin
